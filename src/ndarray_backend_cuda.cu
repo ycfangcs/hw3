@@ -486,8 +486,15 @@ void Matmul(const CudaArray& a, const CudaArray& b, CudaArray* out, uint32_t M, 
 ////////////////////////////////////////////////////////////////////////////////
 // Max and sum reductions
 ////////////////////////////////////////////////////////////////////////////////
-
-
+__global__ void ReduceMaxKernel(scalar_t *a, scalar_t *out, size_t size, size_t reduce_size) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) {
+    scalar_t m = a[gid * reduce_size];
+    for (size_t i=0; i<reduce_size; i++)
+      m = max(m, a[gid * reduce_size + i]);
+    out[gid] = m;
+  }
+}
 
 void ReduceMax(const CudaArray& a, CudaArray* out, size_t reduce_size) {
   /**
@@ -500,12 +507,22 @@ void ReduceMax(const CudaArray& a, CudaArray* out, size_t reduce_size) {
    *   redice_size: size of the dimension to reduce over
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t num_threads = a.size / reduce_size;
+  CudaDims dim = CudaOneDim(num_threads);
+  ReduceMaxKernel<<<dim.grid, dim.block>>> (a.ptr, out->ptr, num_threads, reduce_size);
   /// END YOUR SOLUTION
 }
 
 
-
+__global__ void ReduceSumKernel(scalar_t *a, scalar_t *out, size_t size, size_t reduce_size) {
+  size_t gid = blockIdx.x * blockDim.x + threadIdx.x;
+  if (gid < size) {
+    scalar_t m = 0;
+    for (size_t i=0; i<reduce_size; i++)
+      m += a[gid * reduce_size + i];
+    out[gid] = m;
+  }
+}
 
 void ReduceSum(const CudaArray& a, CudaArray* out, size_t reduce_size) {
   /**
@@ -518,7 +535,9 @@ void ReduceSum(const CudaArray& a, CudaArray* out, size_t reduce_size) {
    *   redice_size: size of the dimension to reduce over
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t num_threads = a.size / reduce_size;
+  CudaDims dim = CudaOneDim(num_threads);
+  ReduceSumKernel<<<dim.grid, dim.block>>> (a.ptr, out->ptr, num_threads, reduce_size);
   /// END YOUR SOLUTION
 }
 
