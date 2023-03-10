@@ -63,7 +63,23 @@ void Compact(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t> sha
    *  function will implement here, so we won't repeat this note.)
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();
+  std::vector<uint32_t> pos(dim, 0);
+  for (size_t i=0; i<out->size; i++) {
+    uint32_t idx = 0;
+    for (int j=0; j<dim; j++) 
+      idx += strides[dim-1-j] * pos[j];
+    out->ptr[i] = a.ptr[idx + offset];
+    pos[0] += 1;
+    // carry
+    for (int j=0; j<dim; j++) {
+      if (pos[j] == shape[dim-1-j]) {
+        pos[j] = 0;
+        if (j != dim-1)
+          pos[j+1] += 1;
+      }
+    }
+  }
   /// END YOUR SOLUTION
 }
 
@@ -80,7 +96,24 @@ void EwiseSetitem(const AlignedArray& a, AlignedArray* out, std::vector<uint32_t
    *   offset: offset of the *out* array (not a, which has zero offset, being compact)
    */
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();
+  std::vector<uint32_t> pos(dim, 0);
+  // NOTE careful with the iteration times, not `out-size`!
+  for (size_t i=0; i<a.size; i++) {
+    uint32_t idx = 0;
+    for (int j=0; j<dim; j++) 
+      idx += strides[dim-1-j] * pos[j];
+    out->ptr[idx + offset] = a.ptr[i];
+    pos[0] += 1;
+    // carry
+    for (int j=0; j<dim; j++) {
+      if (pos[j] == shape[dim-1-j]) {
+        pos[j] = 0;
+        if (j != dim-1)
+          pos[j+1] += 1;
+      }
+    }
+  }  
   /// END YOUR SOLUTION
 }
 
@@ -91,7 +124,7 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    *
    * Args:
    *   size: number of elements to write in out array (note that this will note be the same as
-   *         out.size, because out is a non-compact subset array);  it _will_ be the same as the
+   *         out->size, because out is a non-compact subset array);  it _will_ be the same as the
    *         product of items in shape, but convenient to just pass it here.
    *   val: scalar value to write to
    *   out: non-compact array whose items are to be written
@@ -101,7 +134,23 @@ void ScalarSetitem(const size_t size, scalar_t val, AlignedArray* out, std::vect
    */
 
   /// BEGIN YOUR SOLUTION
-  
+  size_t dim = shape.size();
+  std::vector<uint32_t> pos(dim, 0);
+  for (size_t i=0; i<size; i++) {
+    uint32_t idx = 0;
+    for (int j=0; j<dim; j++) 
+      idx += strides[dim-1-j] * pos[j];
+    out->ptr[idx + offset] = val;
+    pos[0] += 1;
+    // carry
+    for (int j=0; j<dim; j++) {
+      if (pos[j] == shape[dim-1-j]) {
+        pos[j] = 0;
+        if (j != dim-1)
+          pos[j+1] += 1;
+      }
+    }
+  }  
   /// END YOUR SOLUTION
 }
 
@@ -164,7 +213,7 @@ void Matmul(const AlignedArray& a, const AlignedArray& b, AlignedArray* out, uin
    */
 
   /// BEGIN YOUR SOLUTION
-  
+
   /// END YOUR SOLUTION
 }
 
@@ -229,13 +278,13 @@ void ReduceMax(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    * Reduce by taking maximum over `reduce_size` contiguous blocks.
    *
    * Args:
-   *   a: compact array of size a.size = out.size * reduce_size to reduce over
+   *   a: compact array of size a.size = out->size * reduce_size to reduce over
    *   out: compact array to write into
    *   reduce_size: size of the dimension to reduce over
    */
 
   /// BEGIN YOUR SOLUTION
-  
+
   /// END YOUR SOLUTION
 }
 
@@ -244,13 +293,13 @@ void ReduceSum(const AlignedArray& a, AlignedArray* out, size_t reduce_size) {
    * Reduce by taking sum over `reduce_size` contiguous blocks.
    *
    * Args:
-   *   a: compact array of size a.size = out.size * reduce_size to reduce over
+   *   a: compact array of size a.size = out->size * reduce_size to reduce over
    *   out: compact array to write into
    *   reduce_size: size of the dimension to reduce over
    */
 
   /// BEGIN YOUR SOLUTION
-  
+
   /// END YOUR SOLUTION
 }
 
